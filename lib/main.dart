@@ -9,7 +9,6 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-
   MyApp({this.linkHandler});
   final FirebaseEmailLinkHandler linkHandler;
 
@@ -31,12 +30,11 @@ class LandingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return StreamBuilder<FirebaseUser>(
       stream: FirebaseAuth.instance.onAuthStateChanged,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return HomePage();
+          return HomePage(user: snapshot.data);
         } else {
           return SignInPage(linkHandler: linkHandler);
         }
@@ -54,7 +52,6 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-
   String _email;
 
   final _formKey = GlobalKey<FormState>();
@@ -126,6 +123,8 @@ class _SignInPageState extends State<SignInPage> {
 }
 
 class HomePage extends StatelessWidget {
+  const HomePage({Key key, this.user}) : super(key: key);
+  final FirebaseUser user;
 
   void _signOut() {
     FirebaseAuth.instance.signOut();
@@ -143,7 +142,15 @@ class HomePage extends StatelessWidget {
           )
         ],
       ),
-      body: Container(),
+      body: Container(
+        child: Center(
+          child: Text(
+            'Your uid:\n\n${user.uid}',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20.0),
+          ),
+        ),
+      ),
     );
   }
 }
