@@ -123,4 +123,18 @@ For this reason, I have not yet opened a PR to merge this back to [`flutter/plug
 
 Some help from the Flutter / Firebase team would be greatly appreciated to get this resolved. 🙏
 
+## Adding passwordless sign-in to other apps
+
+Until the plugin code is merged back into the official repo, you can use this version of `firebase_auth` in your `pubspec.yaml`:
+
+```
+firebase_auth:
+  git:
+    url: https://github.com/bizz84/plugins
+    ref: enable-passwordless-sign-in
+    path: packages/firebase_auth
+```
+
+Note that you will still need to follow the Firebase setup steps above.
+
 ## [LICENSE: MIT](LICENSE.md)
