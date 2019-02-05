@@ -12,7 +12,7 @@ class FirebaseEmailLinkHandler {
 
   StreamSubscription _subscription;
 
-  void registerHandler() {
+  FirebaseEmailLinkHandler() {
 
     const channel = EventChannel('linkHandler');
     _subscription = channel.receiveBroadcastStream().listen((dynamic event) async {
