@@ -4,10 +4,11 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FirebaseEmailLinkHandler {
 
-  String email;
+  static const userEmailAddressKey = "userEmailAddress";
 
   StreamSubscription _subscription;
 
@@ -15,6 +16,10 @@ class FirebaseEmailLinkHandler {
 
     const channel = EventChannel('linkHandler');
     _subscription = channel.receiveBroadcastStream().listen((dynamic event) async {
+
+      final sharedPreferences = await SharedPreferences.getInstance();
+      final email = sharedPreferences.getString(userEmailAddressKey);
+
       if (email == null) {
         print("email is not set. Skipping sign in...");
         return;
@@ -38,8 +43,25 @@ class FirebaseEmailLinkHandler {
     });
   }
 
+  Future<void> sendLinkToEmail({String email, String url, String iOSBundleID, String androidPackageName}) async {
+    // TODO: Store email securely (e.g. keychain) rather than on shared preferences
+    final sharedPreferences = await SharedPreferences.getInstance();
+    sharedPreferences.setString(userEmailAddressKey, email);
+
+    // Send link
+    await FirebaseAuth.instance.sendLinkToEmail(
+      email: email,
+      url: url,
+      handleCodeInApp: true,
+      iOSBundleID: iOSBundleID,
+      androidPackageName: androidPackageName,
+      androidInstallIfNotAvailable: false,
+      androidMinimumVersion: '14',
+    );
+    print("Sent email link to $email, url: $url");
+  }
+
   void dispose() {
     _subscription?.cancel();
   }
-
 }

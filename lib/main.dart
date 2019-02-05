@@ -58,20 +58,12 @@ class _SignInPageState extends State<SignInPage> {
 
   Future<void> _sendEmailLink() async {
     try {
-      // TODO: Need to store email somewhere (e.g. keychain)
-      // This is needed if the user quits the app then opens the email link
-      widget.linkHandler.email = _email;
-      await FirebaseAuth.instance.sendLinkToEmail(
-        email: widget.linkHandler.email,
+      await widget.linkHandler.sendLinkToEmail(
+        email: _email,
         url: 'https://passwordless-5346f.firebaseapp.com',
-        handleCodeInApp: true,
         iOSBundleID: 'com.codingwithflutter.passwordless',
         androidPackageName: 'com.codingwithflutter.passwordless',
-        androidInstallIfNotAvailable: false,
-        androidMinimumVersion: '14',
-        //dynamicLinkDomain: 'https://mymuse.page.link',
       );
-      print("Sent email link to ${widget.linkHandler.email}");
     } catch (e) {
       print(e);
     }
