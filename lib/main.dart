@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:passwordless/firebase_email_link_handler.dart';
+import 'package:passwordless/platform_alert_dialog.dart';
 
 void main() {
   final linkHandler = FirebaseEmailLinkHandler();
@@ -33,10 +34,18 @@ class LandingPage extends StatelessWidget {
     return StreamBuilder<FirebaseUser>(
       stream: FirebaseAuth.instance.onAuthStateChanged,
       builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return HomePage(user: snapshot.data);
+        if (snapshot.connectionState == ConnectionState.active) {
+          if (snapshot.hasData) {
+            return HomePage(user: snapshot.data);
+          } else {
+            return SignInPage(linkHandler: linkHandler);
+          }
         } else {
-          return SignInPage(linkHandler: linkHandler);
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
       },
     );
@@ -64,8 +73,18 @@ class _SignInPageState extends State<SignInPage> {
         iOSBundleID: 'com.codingwithflutter.passwordless',
         androidPackageName: 'com.codingwithflutter.passwordless',
       );
+      PlatformAlertDialog(
+        title: 'Check your email',
+        content: 'We have sent an activation link to $_email',
+        defaultActionText: 'OK',
+      ).show(context);
     } catch (e) {
-      print(e);
+      // Show error
+      PlatformAlertDialog(
+        title: 'Error sending email',
+        content: e.toString(), // TODO: Show a more user friendly error
+        defaultActionText: 'OK',
+      ).show(context);
     }
   }
 
