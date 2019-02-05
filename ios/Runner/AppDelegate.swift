@@ -26,7 +26,6 @@ import Firebase
   override func application(_ application: UIApplication, continue userActivity: NSUserActivity,
                    restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
     
-    // Todo: Use platform channel for handling this
     return userActivity.webpageURL.flatMap(handlePasswordlessSignIn)!
   }
   
