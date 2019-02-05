@@ -26,11 +26,13 @@ class MainActivity: FlutterActivity() {
             .getDynamicLink(intent)
             .addOnSuccessListener(this) { pendingDynamicLinkData ->
               // Get deep link from result (may be null if no link is found)
-              var deepLink: Uri? = null
               if (pendingDynamicLinkData != null) {
-                deepLink = pendingDynamicLinkData.link
+                var deepLink = pendingDynamicLinkData.link
+                linkStreamHandler?.handleLink(deepLink.toString())
+                  Log.i(TAG, "getDynamicLink:onSuccess -> " + deepLink.toString())
+              } else {
+                  Log.i(TAG, "getDynamicLink:onSuccess -> no link found")
               }
-              linkStreamHandler?.handleLink(deepLink.toString())
             }
             .addOnFailureListener(this) { e -> Log.w(TAG, "getDynamicLink:onFailure", e) }
   }
