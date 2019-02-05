@@ -111,7 +111,11 @@ And here is the corresponding `MainActivity.kt` on Android:
 ```kt
 package com.codingwithflutter.passwordless
 
+import android.content.ContentValues.TAG
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
 
 import io.flutter.app.FlutterActivity
 import io.flutter.plugin.common.EventChannel
@@ -126,6 +130,20 @@ class MainActivity: FlutterActivity() {
     linkStreamHandler = LinkStreamHandler()
     val channel = EventChannel(flutterView, "linkHandler")
     channel.setStreamHandler(linkStreamHandler)
+
+    // https://firebase.google.com/docs/dynamic-links/android/receive
+    // TODO: Why does this code crash the app?
+    FirebaseDynamicLinks.getInstance()
+            .getDynamicLink(intent)
+            .addOnSuccessListener(this) { pendingDynamicLinkData ->
+              // Get deep link from result (may be null if no link is found)
+              var deepLink: Uri? = null
+              if (pendingDynamicLinkData != null) {
+                deepLink = pendingDynamicLinkData.link
+              }
+              linkStreamHandler?.handleLink(deepLink.toString())
+            }
+            .addOnFailureListener(this) { e -> Log.w(TAG, "getDynamicLink:onFailure", e) }
   }
 }
 
@@ -145,15 +163,13 @@ class LinkStreamHandler: EventChannel.StreamHandler {
     eventSink?.success(link)
   }
 }
-
-// TODO: Handle incoming links
 ```
 
 This code uses `EventChannel` and `EventSink`, and is based on this article on Medium:
 
 - [Flutter Platform Channels](https://medium.com/flutter-io/flutter-platform-channels-ce7f540a104e?linkId=56128409)
 
-This works, but means that some native code is needed on the client app to receive the incoming email link, and pass it back to Flutter.
+This means that some native code is needed on the client app to receive the incoming email link, and pass it back to Flutter.
 
 It would be a lot nicer if all this could be included as part of the `FirebaseAuth` plugin itself, however I'm not sure about the best way of achieving this.
 
