@@ -25,21 +25,28 @@ Since I needed it for one of my projects, I forked the Firebase plugins repo and
 
 - [bizz84/plugins](https://github.com/bizz84/plugins/tree/enable-passwordless-sign-in)
 
-As part of this, I have implemented the following methods:
+As part of this, I have implemented the necessary methods in Flutter and the iOS and Android counterparts:
 
 - `sendLinkToEmail`
 - `isSignInWithEmailLink`
 - `signInWithEmailAndLink`
 
-I have implemented the corresponding code for iOS (Android planned).
+The result of this is a PR to the Firebase plugins repo:
+
+### [#1159 - Enable passwordless sign in](https://github.com/flutter/plugins/pull/1159)
+
 
 Unfortunately, the plugin code itself is not enough to complete the entire flow. 
 
-To get things working, I have to add additional platform specific code to handle the incoming links and sending them back to Flutter via an `EventChannel`.
+To get things working, I added additional platform specific code to handle the incoming links and sending them back to Flutter via an `EventChannel`.
 
 This is how the `AppDelegate` looks on iOS:
 
 ```swift
+import UIKit
+import Flutter
+import Firebase
+
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
   
@@ -64,7 +71,6 @@ This is how the `AppDelegate` looks on iOS:
   override func application(_ application: UIApplication, continue userActivity: NSUserActivity,
                    restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
     
-    // Todo: Use platform channel for handling this
     return userActivity.webpageURL.flatMap(handlePasswordlessSignIn)!
   }
   
@@ -132,16 +138,21 @@ class MainActivity: FlutterActivity() {
     channel.setStreamHandler(linkStreamHandler)
 
     // https://firebase.google.com/docs/dynamic-links/android/receive
-    // TODO: Why does this code crash the app?
+    // NOTE: This seems to crash the app on emulator with this log:
+    // Error connecting to the service protocol: HttpException: Connection closed before full header was received, uri = http://127.0.0.1:53810/ws
+    // See: https://github.com/flutter/flutter/issues/19056
+    // It appears to work fine on real device
     FirebaseDynamicLinks.getInstance()
             .getDynamicLink(intent)
             .addOnSuccessListener(this) { pendingDynamicLinkData ->
               // Get deep link from result (may be null if no link is found)
-              var deepLink: Uri? = null
               if (pendingDynamicLinkData != null) {
-                deepLink = pendingDynamicLinkData.link
+                var deepLink = pendingDynamicLinkData.link
+                linkStreamHandler?.handleLink(deepLink.toString())
+                  Log.i(TAG, "getDynamicLink:onSuccess -> " + deepLink.toString())
+              } else {
+                  Log.i(TAG, "getDynamicLink:onSuccess -> no link found")
               }
-              linkStreamHandler?.handleLink(deepLink.toString())
             }
             .addOnFailureListener(this) { e -> Log.w(TAG, "getDynamicLink:onFailure", e) }
   }
@@ -169,18 +180,18 @@ This code uses `EventChannel` and `EventSink`, and is based on this article on M
 
 - [Flutter Platform Channels](https://medium.com/flutter-io/flutter-platform-channels-ce7f540a104e?linkId=56128409)
 
-This means that some native code is needed on the client app to receive the incoming email link, and pass it back to Flutter.
+In summary, some native code is needed on the client app to receive the incoming email link, and pass it back to Flutter.
 
-It would be a lot nicer if all this could be included as part of the `FirebaseAuth` plugin itself, however I'm not sure about the best way of achieving this.
+It would be great if all this could be included as part of the `FirebaseAuth` plugin itself, however I'm not sure that this is within the scope of the plugins repo.
 
-For this reason, I have not yet opened a PR to merge this back to [`flutter/plugins`](https://github.com/flutter/plugins).
+Instead, it may be desirable to create a separate Flutter package to take care of the native code.
+
+**For the time being, client apps can use this project as a template**. 
 
 ## Next steps
 
-- [ ] Figure out how to handle the email link properly, so that no custom code is needed in the client app
-- [ ] Implement the Android plugin code
-- [ ] Handle errors, and make this production ready.
-- [ ] Merge this back into `firebase_auth`.
+- [ ] Write a Flutter package to handle the email link properly, so that no custom code is needed in the client app
+- [ ] Merge [this PR](https://github.com/flutter/plugins/pull/1159) back into `firebase_auth`.
 
 Some help from the Flutter / Firebase team would be greatly appreciated to get this resolved. 🙏
 
@@ -197,5 +208,9 @@ firebase_auth:
 ```
 
 Note that you will still need to follow the Firebase setup steps above.
+
+## Credits
+
+[Paolo Rotolo](https://twitter.com/PaoloRotolo) for helping with the Android implementation and testing.
 
 ## [LICENSE: MIT](LICENSE.md)
