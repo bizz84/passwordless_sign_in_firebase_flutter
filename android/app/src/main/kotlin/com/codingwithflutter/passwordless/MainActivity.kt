@@ -21,7 +21,10 @@ class MainActivity: FlutterActivity() {
     channel.setStreamHandler(linkStreamHandler)
 
     // https://firebase.google.com/docs/dynamic-links/android/receive
-    // TODO: This seems to crash the app on emulator. See: https://github.com/flutter/flutter/issues/19056
+    // NOTE: This seems to crash the app on emulator with this log:
+    // Error connecting to the service protocol: HttpException: Connection closed before full header was received, uri = http://127.0.0.1:53810/ws
+    // See: https://github.com/flutter/flutter/issues/19056
+    // It appears to work fine on real device
     FirebaseDynamicLinks.getInstance()
             .getDynamicLink(intent)
             .addOnSuccessListener(this) { pendingDynamicLinkData ->
