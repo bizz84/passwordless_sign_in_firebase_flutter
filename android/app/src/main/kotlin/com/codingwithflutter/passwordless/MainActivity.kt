@@ -21,7 +21,7 @@ class MainActivity: FlutterActivity() {
     channel.setStreamHandler(linkStreamHandler)
 
     // https://firebase.google.com/docs/dynamic-links/android/receive
-    // TODO: Why does this code crash the app?
+    // TODO: This seems to crash the app on emulator. See: https://github.com/flutter/flutter/issues/19056
     FirebaseDynamicLinks.getInstance()
             .getDynamicLink(intent)
             .addOnSuccessListener(this) { pendingDynamicLinkData ->
