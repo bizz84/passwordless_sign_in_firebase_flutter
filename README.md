@@ -35,7 +35,9 @@ I have implemented the corresponding code for iOS (Android planned).
 
 Unfortunately, the plugin code itself is not enough to complete the entire flow. 
 
-To get things working, I have to handle the incoming links in the `AppDelegate`:
+To get things working, I have to add additional platform specific code to handle the incoming links and sending them back to Flutter via an `EventChannel`.
+
+This is how the `AppDelegate` looks on iOS:
 
 ```swift
 @UIApplicationMain
@@ -104,11 +106,70 @@ class LinkStreamHandler: NSObject, FlutterStreamHandler {
 }
 ```
 
-This code uses `FlutterEventChannel` and `FlutterEventSink`, and is based on this article on Medium:
+And here is the corresponding `MainActivity.kt` on Android:
+
+```kt
+package com.codingwithflutter.passwordless
+
+import android.content.ContentValues.TAG
+import android.net.Uri
+import android.os.Bundle
+import android.util.Log
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
+
+import io.flutter.app.FlutterActivity
+import io.flutter.plugin.common.EventChannel
+import io.flutter.plugins.GeneratedPluginRegistrant
+
+class MainActivity: FlutterActivity() {
+  var linkStreamHandler: LinkStreamHandler? = null
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    GeneratedPluginRegistrant.registerWith(this)
+    linkStreamHandler = LinkStreamHandler()
+    val channel = EventChannel(flutterView, "linkHandler")
+    channel.setStreamHandler(linkStreamHandler)
+
+    // https://firebase.google.com/docs/dynamic-links/android/receive
+    // TODO: Why does this code crash the app?
+    FirebaseDynamicLinks.getInstance()
+            .getDynamicLink(intent)
+            .addOnSuccessListener(this) { pendingDynamicLinkData ->
+              // Get deep link from result (may be null if no link is found)
+              var deepLink: Uri? = null
+              if (pendingDynamicLinkData != null) {
+                deepLink = pendingDynamicLinkData.link
+              }
+              linkStreamHandler?.handleLink(deepLink.toString())
+            }
+            .addOnFailureListener(this) { e -> Log.w(TAG, "getDynamicLink:onFailure", e) }
+  }
+}
+
+class LinkStreamHandler: EventChannel.StreamHandler {
+
+  private var eventSink: EventChannel.EventSink? = null
+
+  override fun onListen(
+          arguments: Any?, eventSink: EventChannel.EventSink?) {
+    this.eventSink = eventSink
+  }
+  override fun onCancel(arguments: Any?) {
+    eventSink = null
+  }
+
+  fun handleLink(link: String) {
+    eventSink?.success(link)
+  }
+}
+```
+
+This code uses `EventChannel` and `EventSink`, and is based on this article on Medium:
 
 - [Flutter Platform Channels](https://medium.com/flutter-io/flutter-platform-channels-ce7f540a104e?linkId=56128409)
 
-This works, but means that some native code is needed on the client app to receive the incoming email link, and pass it back to Flutter.
+This means that some native code is needed on the client app to receive the incoming email link, and pass it back to Flutter.
 
 It would be a lot nicer if all this could be included as part of the `FirebaseAuth` plugin itself, however I'm not sure about the best way of achieving this.
 
