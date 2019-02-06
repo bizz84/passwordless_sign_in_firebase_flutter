@@ -209,6 +209,12 @@ firebase_auth:
 
 Note that you will still need to follow the Firebase setup steps above.
 
+## Keyboard not showing on Android Pie
+If you're using Flutter ```1.0 stable```, there's a chance **Soft Keybord will not be triggered** when tapping on the TextField on Android Pie (SDK 28).
+
+This is a known bug of the Flutter Framework and the fix is already available on the ```dev``` channel.
+Original issue [here](https://github.com/flutter/flutter/issues/21911).
+
 ## Credits
 
 [Paolo Rotolo](https://twitter.com/PaoloRotolo) for helping with the Android implementation and testing.
