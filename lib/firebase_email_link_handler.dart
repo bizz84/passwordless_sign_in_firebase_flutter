@@ -7,29 +7,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class FirebaseEmailLinkHandler {
   final SharedPreferences sharedPreferences;
-  final EventChannel channel;
 
-  static const userEmailAddressKey = "userEmailAddress";
+  static const _channel = EventChannel('linkHandler');
+  static const _userEmailAddressKey = "userEmailAddress";
 
-  StreamSubscription _subscription;
+  StreamSubscription _channelStreamSubscription;
 
-  String get email => sharedPreferences.getString(userEmailAddressKey);
+  String get email => sharedPreferences.getString(_userEmailAddressKey);
 
-  Stream<String> get channelStream => channel.receiveBroadcastStream().map((event) => event as String);
+  Stream<String> get _channelStream => _channel.receiveBroadcastStream().map((event) => event as String);
 
   StreamController<String> _errorController = StreamController<String>();
   Stream<String> get errorStream => _errorController.stream;
 
-  FirebaseEmailLinkHandler({@required this.channel, @required this.sharedPreferences}) {
-    _subscription = channelStream.listen((String event) async {
-      final email = sharedPreferences.getString(userEmailAddressKey);
+  FirebaseEmailLinkHandler({@required this.sharedPreferences}) {
+    _channelStreamSubscription = _channelStream.listen((String link) async {
+      final email = sharedPreferences.getString(_userEmailAddressKey);
 
       if (email == null) {
         print("email is not set. Skipping sign in...");
+        _errorController.add("Email not configured");
         return;
       }
-      print('Received event: $event');
-      String link = event;
+      print('Received link: $link');
       if (await FirebaseAuth.instance.isSignInWithEmailLink(link: link)) {
         try {
           final user = await FirebaseAuth.instance.signInWithEmailAndLink(email: email, link: link);
@@ -47,7 +47,7 @@ class FirebaseEmailLinkHandler {
 
   Future<void> sendLinkToEmail({String email, String url, String iOSBundleID, String androidPackageName}) async {
     // TODO: Store email securely (e.g. keychain) rather than on shared preferences
-    sharedPreferences.setString(userEmailAddressKey, email);
+    sharedPreferences.setString(_userEmailAddressKey, email);
 
     // Send link
     await FirebaseAuth.instance.sendLinkToEmail(
@@ -63,7 +63,7 @@ class FirebaseEmailLinkHandler {
   }
 
   void dispose() {
-    _subscription?.cancel();
+    _channelStreamSubscription?.cancel();
     _errorController.close();
   }
 }

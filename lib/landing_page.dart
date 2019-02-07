@@ -34,6 +34,7 @@ class LandingPageState extends State<LandingPage> {
 
   @override
   void dispose() {
+    widget.linkHandler.dispose();
     _subscription?.cancel();
     super.dispose();
   }

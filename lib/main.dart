@@ -11,7 +11,6 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({Key key, this.sharedPreferences}) : super(key: key);
   final SharedPreferences sharedPreferences;
-  static final channel = EventChannel('linkHandler');
 
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -22,7 +21,6 @@ class MyApp extends StatelessWidget {
       home: LandingPage(
         linkHandler: FirebaseEmailLinkHandler(
           sharedPreferences: sharedPreferences,
-          channel: channel,
         ),
       ),
     );
