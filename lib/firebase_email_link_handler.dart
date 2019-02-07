@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:rxdart/rxdart.dart';
 
 class FirebaseEmailLinkHandler {
   final SharedPreferences sharedPreferences;
@@ -18,8 +17,8 @@ class FirebaseEmailLinkHandler {
 
   Stream<String> get channelStream => channel.receiveBroadcastStream().map((event) => event as String);
 
-  BehaviorSubject<String> _errorController = BehaviorSubject<String>();
-  Observable<String> get errorStream => _errorController.stream;
+  StreamController<String> _errorController = StreamController<String>();
+  Stream<String> get errorStream => _errorController.stream;
 
   FirebaseEmailLinkHandler({@required this.channel, @required this.sharedPreferences}) {
     _subscription = channelStream.listen((String event) async {
