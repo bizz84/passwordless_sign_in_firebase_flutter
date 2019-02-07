@@ -69,6 +69,7 @@ class _SignInPageState extends State<SignInPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextFormField(
+            initialValue: widget.linkHandler.email,
             decoration: InputDecoration(
               hintText: 'Email Address',
             ),
