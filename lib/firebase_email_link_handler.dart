@@ -1,52 +1,53 @@
-
-
 import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FirebaseEmailLinkHandler {
+  final SharedPreferences sharedPreferences;
 
-  static const userEmailAddressKey = "userEmailAddress";
+  static const _channel = EventChannel('linkHandler');
+  static const _userEmailAddressKey = "userEmailAddress";
 
-  StreamSubscription _subscription;
+  StreamSubscription _channelStreamSubscription;
 
-  FirebaseEmailLinkHandler() {
+  String get email => sharedPreferences.getString(_userEmailAddressKey);
 
-    const channel = EventChannel('linkHandler');
-    _subscription = channel.receiveBroadcastStream().listen((dynamic event) async {
+  Stream<String> get _channelStream => _channel.receiveBroadcastStream().map((event) => event as String);
 
-      final sharedPreferences = await SharedPreferences.getInstance();
-      final email = sharedPreferences.getString(userEmailAddressKey);
+  StreamController<String> _errorController = StreamController<String>();
+  Stream<String> get errorStream => _errorController.stream;
+
+  FirebaseEmailLinkHandler({@required this.sharedPreferences}) {
+    _channelStreamSubscription = _channelStream.listen((String link) async {
+      final email = sharedPreferences.getString(_userEmailAddressKey);
 
       if (email == null) {
         print("email is not set. Skipping sign in...");
+        _errorController.add("Email not configured");
         return;
       }
-      if (event is String) {
-        print('Received event: $event');
-        String link = event;
-        if (await FirebaseAuth.instance.isSignInWithEmailLink(link: link)) {
-          try {
-            final user = await FirebaseAuth.instance.signInWithEmailAndLink(email: email, link: link);
-            print('email: ${user.email}, uid: ${user.uid}');
-          } catch (e) {
-            print(e);
-          }
+      print('Received link: $link');
+      if (await FirebaseAuth.instance.isSignInWithEmailLink(link: link)) {
+        try {
+          final user = await FirebaseAuth.instance.signInWithEmailAndLink(email: email, link: link);
+          print('email: ${user.email}, uid: ${user.uid}');
+        } catch (e) {
+          print(e);
+          _errorController.add(e.toString());
         }
-      } else {
-        print('Unrecognized event: $event');
       }
     }, onError: (dynamic error) {
       print('Received error: ${error.message}');
+      _errorController.add(error.toString());
     });
   }
 
   Future<void> sendLinkToEmail({String email, String url, String iOSBundleID, String androidPackageName}) async {
     // TODO: Store email securely (e.g. keychain) rather than on shared preferences
-    final sharedPreferences = await SharedPreferences.getInstance();
-    sharedPreferences.setString(userEmailAddressKey, email);
+    sharedPreferences.setString(_userEmailAddressKey, email);
 
     // Send link
     await FirebaseAuth.instance.sendLinkToEmail(
@@ -62,6 +63,7 @@ class FirebaseEmailLinkHandler {
   }
 
   void dispose() {
-    _subscription?.cancel();
+    _channelStreamSubscription?.cancel();
+    _errorController.close();
   }
 }

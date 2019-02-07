@@ -25,7 +25,6 @@ import Firebase
   
   override func application(_ application: UIApplication, continue userActivity: NSUserActivity,
                    restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
-    
     return userActivity.webpageURL.flatMap(handlePasswordlessSignIn)!
   }
   
@@ -42,8 +41,8 @@ import Firebase
   }
 
   func handlePasswordlessSignIn(withURL url: URL) -> Bool {
-    linkStreamHandler.handleLink(url.absoluteString)
-    return true
+    eventChannel.setStreamHandler(linkStreamHandler)
+    return linkStreamHandler.handleLink(url.absoluteString)
   }
 }
 
@@ -51,8 +50,13 @@ class LinkStreamHandler: NSObject, FlutterStreamHandler {
   
   var eventSink: FlutterEventSink?
   
+  // links will be added to this queue until the sink is ready to process them
+  var queuedLinks = [String]()
+  
   func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
     self.eventSink = events
+    queuedLinks.forEach({ events($0) })
+    queuedLinks.removeAll()
     return nil
   }
   
@@ -61,7 +65,12 @@ class LinkStreamHandler: NSObject, FlutterStreamHandler {
     return nil
   }
   
-  func handleLink(_ link: String) {
-    eventSink?(link)
+  func handleLink(_ link: String) -> Bool {
+    guard let eventSink = eventSink else {
+      queuedLinks.append(link)
+      return false
+    }
+    eventSink(link)
+    return true
   }
 }
