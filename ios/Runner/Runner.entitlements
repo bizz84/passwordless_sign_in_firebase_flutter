@@ -4,7 +4,6 @@
 <dict>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:1:208621810826:ios:5b4ebf01b37a1946.firebaseapp.com</string>
 		<string>applinks:passwordless.page.link</string>
 	</array>
 </dict>
