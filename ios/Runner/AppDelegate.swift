@@ -15,8 +15,8 @@ import Firebase
   
   override func application(
     _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?
-  ) -> Bool {
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
     eventChannel.setStreamHandler(linkStreamHandler)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -24,22 +24,22 @@ import Firebase
   
   
   override func application(_ application: UIApplication, continue userActivity: NSUserActivity,
-                   restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
+                            restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
     return userActivity.webpageURL.flatMap(handlePasswordlessSignIn)!
   }
   
   @available(iOS 9.0, *)
-  override func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any]) -> Bool {
+  override func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any]) -> Bool {
     return application(app, open: url,
-                       sourceApplication: options[UIApplicationOpenURLOptionsKey.sourceApplication] as? String,
+                       sourceApplication: options[UIApplication.OpenURLOptionsKey.sourceApplication] as? String,
                        annotation: "")
   }
-
+  
   
   override func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
     return handlePasswordlessSignIn(withURL: url)
   }
-
+  
   func handlePasswordlessSignIn(withURL url: URL) -> Bool {
     eventChannel.setStreamHandler(linkStreamHandler)
     return linkStreamHandler.handleLink(url.absoluteString)
