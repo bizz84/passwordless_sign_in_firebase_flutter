@@ -2,6 +2,11 @@
 
 This sample app shows how to implement passwordless email sign in via an email link with Firebase.
 
+### NOTE: This project is now outdated! DO NOT USE.
+
+- Passwordless sign-in will be added to my [Reference Authentication Flow with Flutter & Firebase](https://github.com/bizz84/firebase_auth_demo_flutter) app.
+
+- See [this PR](https://github.com/bizz84/firebase_auth_demo_flutter/pull/28) for updates.
 
 ## Preview
 
@@ -15,7 +20,7 @@ The Firebase app needs to be configured correcly. I've been following these step
 - [Authenticate with Firebase Using Email Link in Android](https://firebase.google.com/docs/auth/android/email-link-auth)
 - [Passing State in Email Actions](https://firebase.google.com/docs/auth/ios/passing-state-in-email-actions#configuring_firebase_dynamic_links)
 
-## Important note
+## Important note - OUTDATED
 
 Support for passwordless email sign in [has been requested](https://github.com/flutter/flutter/issues/22958) but has **not yet been implemented** in the Flutter Firebase repo. Details here:
 
@@ -197,14 +202,14 @@ Instead, it may be desirable to create a separate Flutter package to take care o
 
 **For the time being, client apps can use this project as a template**. 
 
-## Next steps
+## Next steps - OUTDATED
 
 - [ ] Write a Flutter package to handle the email link properly, so that no custom code is needed in the client app
 - [ ] Merge [this PR](https://github.com/flutter/plugins/pull/1159) back into `firebase_auth`.
 
 Some help from the Flutter / Firebase team would be greatly appreciated to get this resolved. 🙏
 
-## Adding passwordless sign-in to other apps
+## Adding passwordless sign-in to other apps - OUTDATED
 
 Until the plugin code is merged back into the official repo, you can use this version of `firebase_auth` in your `pubspec.yaml`:
 
